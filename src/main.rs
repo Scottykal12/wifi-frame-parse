@@ -1,3 +1,5 @@
+use std::fmt::LowerHex;
+
 use libwifi::{
     self,
     frame::{components::MacAddress, Beacon, ProbeRequest, ProbeResponse, AssociationRequest, AssociationResponse, Rts, Cts, Ack, BlockAckRequest, BlockAck, Data, NullData, QosData, QosNull},
@@ -23,12 +25,12 @@ fn main() {
             .unwrap();
 
         if let Ok(pkt) = cap.next_packet() {
+            
             // GET RADIOTAP INFO
             let rdtap = Radiotap::from_bytes(&pkt.data).unwrap();
 
             // PARSE 802.11 FRAMES
             if let Ok(frm) = libwifi::parse_frame(&pkt.data[rdtap.header.length..]) {
-                // println!("{:?}", frm);
                 match frm {
                     // can this be done without spelling it out? don't need every line
                     libwifi::Frame::Beacon(beacon) => parse_beacon(beacon),
@@ -52,18 +54,24 @@ fn main() {
 }
 
 fn convert_mac_hex(macadd: MacAddress) -> String {
-    // TODO: convet macaddress from Decimal to Hex
-    // Divide the number by 16.
-    // Get the integer quotient for the next iteration.
-    // Get the remainder for the hex digit.
-    // Repeat the steps until the quotient is equal to 0.
-    return "test".to_string();
+    let o1 = format!("{:X}" , macadd.0[0]);
+    let o2 = format!("{:X}" , macadd.0[1]);
+    let o3 = format!("{:X}" , macadd.0[2]);
+    let o4 = format!("{:X}" , macadd.0[3]);
+    let o5 = format!("{:X}" , macadd.0[4]);
+    let o6 = format!("{:X}" , macadd.0[5]);
+    let mac: String = o1 + ":" + &o2 + ":" + &o3 + ":" + &o4 + ":" + &o5 + ":" + &o6;
+
+    return mac;
 }
 
 // TODO: add the corect output for each function. ie beacon pushes beacon...
 fn parse_beacon(beacon: Beacon) {
     println!("Beacon");
     println!("{:?}", beacon.station_info.ssid);
+    println!("{:?}", convert_mac_hex(beacon.header.address_1));
+    println!("{:?}", convert_mac_hex(beacon.header.address_2));
+    println!("{:?}", convert_mac_hex(beacon.header.address_3));
 }
 
 fn parse_proberequest(proberequest: ProbeRequest) {
