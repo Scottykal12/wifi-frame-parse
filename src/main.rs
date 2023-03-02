@@ -1,10 +1,11 @@
-use std::{env, process::Command};
 use libwifi::{
     self,
     frame::{components::MacAddress, *},
+    Addresses,
 };
 use pcap::{Capture, Device};
 use radiotap::Radiotap;
+use std::{collections::HashMap, env, process::Command};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -23,6 +24,8 @@ fn main() {
     if command == "--managed" || command == "-g" {
         man_mode(int);
     }
+
+    let mut hash = MY_HASHMAP.lock().unwrap();
 }
 
 fn mon_mode(interface: &String) {
@@ -96,8 +99,8 @@ fn scan(interface: &str) {
     // TODO: set device manually
 
     let dev: Device = pcap::Device::from(interface);
-        // .expect("device lookup failed")
-        // .expect("no device available");
+    // .expect("device lookup failed")
+    // .expect("no device available");
 
     loop {
         let mut cap = Capture::from_device(dev.clone())
@@ -135,13 +138,13 @@ fn scan(interface: &str) {
     }
 }
 
-fn convert_mac_hex(macadd: MacAddress) -> String {
-    let o1 = format!("{:X}", macadd.0[0]);
-    let o2 = format!("{:X}", macadd.0[1]);
-    let o3 = format!("{:X}", macadd.0[2]);
-    let o4 = format!("{:X}", macadd.0[3]);
-    let o5 = format!("{:X}", macadd.0[4]);
-    let o6 = format!("{:X}", macadd.0[5]);
+fn convert_mac_hex(macadd: &MacAddress) -> String {
+    let o1 = format!("{:0X}", macadd.0[0]);
+    let o2 = format!("{:0X}", macadd.0[1]);
+    let o3 = format!("{:0X}", macadd.0[2]);
+    let o4 = format!("{:0X}", macadd.0[3]);
+    let o5 = format!("{:0X}", macadd.0[4]);
+    let o6 = format!("{:0X}", macadd.0[5]);
     let mac: String = o1 + ":" + &o2 + ":" + &o3 + ":" + &o4 + ":" + &o5 + ":" + &o6;
 
     return mac;
@@ -150,10 +153,12 @@ fn convert_mac_hex(macadd: MacAddress) -> String {
 // TODO: add the corect output for each function. ie beacon pushes beacon...
 fn parse_beacon(beacon: Beacon) {
     println!("Beacon");
-    println!("{:?}", beacon.station_info.ssid);
-    println!("{:?}", convert_mac_hex(beacon.header.address_1));
-    println!("{:?}", convert_mac_hex(beacon.header.address_2));
-    println!("{:?}", convert_mac_hex(beacon.header.address_3));
+    println!("{:?}", beacon.station_info.ssid.as_ref().unwrap());
+    // println!("{:?}", convert_mac_hex(beacon.header.address_1));
+    // println!("{:?}", convert_mac_hex(beacon.header.address_2));
+    // println!("{:?}", convert_mac_hex(beacon.header.address_3));
+    println!("{:?}", convert_mac_hex(beacon.bssid().as_ref().unwrap()));
+    println!("{:?}", beacon.bssid().as_ref().unwrap());
 }
 
 // fn parse_proberequest(proberequest: ProbeRequest) {
