@@ -24,8 +24,6 @@ fn main() {
     if command == "--managed" || command == "-g" {
         man_mode(int);
     }
-
-    let mut hash = MY_HASHMAP.lock().unwrap();
 }
 
 fn mon_mode(interface: &String) {
@@ -34,6 +32,7 @@ fn mon_mode(interface: &String) {
     // sudo ip link set wlp1s0 up
 
     // issue with this not staying up. The interface keeps getting grabed by netdev / netmanger
+    // airmon just adds a new interface to steal it from netmanager
     let _linkdown = Command::new("sudo")
         .arg("ip")
         .arg("link")
@@ -95,7 +94,6 @@ fn man_mode(interface: &String) {
 }
 
 fn scan(interface: &str) {
-    // println!("{:?}", Device::list());
     // TODO: set device manually
 
     let dev: Device = pcap::Device::from(interface);
@@ -106,7 +104,8 @@ fn scan(interface: &str) {
         let mut cap = Capture::from_device(dev.clone())
             .unwrap()
             .promisc(true) //Promiscous mode
-            .timeout(1) //1 sec timeout
+            .timeout(100) //1 sec timeout
+            .snaplen(240)
             .open()
             .unwrap();
 
@@ -127,7 +126,7 @@ fn scan(interface: &str) {
                     // libwifi::Frame::Ack(ack) => parse_ACK(ack),
                     // libwifi::Frame::BlockAckRequest(blockackrequest) => parse_blockackrequest(blockackrequest),
                     // libwifi::Frame::BlockAck(blockack) => parse_blockack(blockack),
-                    // libwifi::Frame::Data(data) => parse_data(data),
+                    libwifi::Frame::Data(data) => parse_data(data),
                     // libwifi::Frame::NullData(nulldata) => parse_nulldata(nulldata),
                     // libwifi::Frame::QosData(qosdata) => parse_qosdata(qosdata),
                     // libwifi::Frame::QosNull(qosnull) => parse_qosnull(qosnull),
@@ -139,6 +138,14 @@ fn scan(interface: &str) {
 }
 
 fn convert_mac_hex(macadd: &MacAddress) -> String {
+    // make this fucking work!!!
+    // let mut mac = String::from("");
+    // for i in macadd.0 {
+    //     let oct = format!("{:02X}", i).as_str();
+    //     mac.extend([ oct ].iter());
+    // }
+    // return mac;
+
     let o1 = format!("{:0X}", macadd.0[0]);
     let o2 = format!("{:0X}", macadd.0[1]);
     let o3 = format!("{:0X}", macadd.0[2]);
@@ -153,12 +160,8 @@ fn convert_mac_hex(macadd: &MacAddress) -> String {
 // TODO: add the corect output for each function. ie beacon pushes beacon...
 fn parse_beacon(beacon: Beacon) {
     println!("Beacon");
-    println!("{:?}", beacon.station_info.ssid.as_ref().unwrap());
-    // println!("{:?}", convert_mac_hex(beacon.header.address_1));
-    // println!("{:?}", convert_mac_hex(beacon.header.address_2));
-    // println!("{:?}", convert_mac_hex(beacon.header.address_3));
-    println!("{:?}", convert_mac_hex(beacon.bssid().as_ref().unwrap()));
-    println!("{:?}", beacon.bssid().as_ref().unwrap());
+    println!("   |{:?}", beacon.station_info.ssid.as_ref().unwrap());
+    println!("   |{:?}", convert_mac_hex(beacon.bssid().as_ref().unwrap()));
 }
 
 // fn parse_proberequest(proberequest: ProbeRequest) {
@@ -197,9 +200,12 @@ fn parse_beacon(beacon: Beacon) {
 //     println!("Block ACK");
 // }
 
-// fn parse_data(data: Data) {
-//     println!("Data");
-// }
+fn parse_data(data: Data) {
+    println!("Data");
+    println!("{:?}", convert_mac_hex(&data.header.address_1));
+    println!("{:?}", convert_mac_hex(&data.header.address_2));
+    println!("{:?}", convert_mac_hex(&data.header.address_3));
+}
 
 // fn parse_nulldata(nulldata: NullData) {
 //     println!("Null Data");
