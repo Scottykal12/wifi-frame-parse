@@ -26,13 +26,27 @@ fn main() {
     }
 }
 
+// nmcli device set wlp0s20f3 managed no
+
 fn mon_mode(interface: &String) {
+    // nmcli device set wlp0s20f3 managed no
     // sudo ip link set wlp1s0 down
     // sudo iw wlp1s0 set monitor none
     // sudo ip link set wlp1s0 up
 
     // issue with this not staying up. The interface keeps getting grabed by netdev / netmanger
     // airmon just adds a new interface to steal it from netmanager
+    // imma try nmcli managed no
+
+    let _nmcli = Command::new("nmcli")
+        .arg("device")
+        .arg("set")
+        .arg("wlp0s20f3")
+        .arg("managed")
+        .arg("no")
+        .output()
+        .expect("failed to execute process");
+
     let _linkdown = Command::new("sudo")
         .arg("ip")
         .arg("link")
@@ -44,6 +58,7 @@ fn mon_mode(interface: &String) {
 
     let _monmode = Command::new("sudo")
         .arg("iw")
+        .arg("dev")
         .arg(interface)
         .arg("set")
         .arg("type")
@@ -65,6 +80,8 @@ fn man_mode(interface: &String) {
     // sudo ip link set wlp1s0 down
     // sudo iw wlp1s0 set type managed
     // sudo ip link set wlp1s0 up
+    // nmcli device set wlp0s20f3 managed no
+
     let _linkdown = Command::new("sudo")
         .arg("ip")
         .arg("link")
@@ -91,6 +108,15 @@ fn man_mode(interface: &String) {
         .arg("up")
         .output()
         .expect("failed to bring interface up");
+
+    let _nmcli = Command::new("nmcli")
+        .arg("device")
+        .arg("set")
+        .arg("wlp0s20f3")
+        .arg("managed")
+        .arg("yes")
+        .output()
+        .expect("failed to execute process");
 }
 
 fn scan(interface: &str) {
@@ -138,22 +164,11 @@ fn scan(interface: &str) {
 }
 
 fn convert_mac_hex(macadd: &MacAddress) -> String {
-    // make this fucking work!!!
-    // let mut mac = String::from("");
-    // for i in macadd.0 {
-    //     let oct = format!("{:02X}", i).as_str();
-    //     mac.extend([ oct ].iter());
-    // }
-    // return mac;
-
-    let o1 = format!("{:0X}", macadd.0[0]);
-    let o2 = format!("{:0X}", macadd.0[1]);
-    let o3 = format!("{:0X}", macadd.0[2]);
-    let o4 = format!("{:0X}", macadd.0[3]);
-    let o5 = format!("{:0X}", macadd.0[4]);
-    let o6 = format!("{:0X}", macadd.0[5]);
-    let mac: String = o1 + ":" + &o2 + ":" + &o3 + ":" + &o4 + ":" + &o5 + ":" + &o6;
-
+    let mut mac = String::from("");
+    for i in macadd.0 {
+        let oct = format!("{:02X}", i);
+        mac.extend([oct]);
+    }
     return mac;
 }
 
